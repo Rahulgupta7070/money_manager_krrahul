@@ -40,10 +40,7 @@ public class SecurityConfig {
 
         return httpSecurity.csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register","/login","/health","/activate").permitAll()
-                        .anyRequest().authenticated()
-                )
+                .authorizeHttpRequests(auth->auth.requestMatchers("/register","/login","/health","/activate").permitAll().anyRequest().authenticated())
                 .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
