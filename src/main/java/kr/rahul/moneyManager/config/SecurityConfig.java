@@ -1,7 +1,5 @@
 package kr.rahul.moneyManager.config;
 
-import java.util.List;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -16,9 +14,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import kr.rahul.moneyManager.service.MyUserDetailsService;
 import kr.rahul.moneyManager.util.JwtFilter;
@@ -36,7 +31,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
 
         return httpSecurity.csrf(AbstractHttpConfigurer::disable)
-                .cors(Customizer.withDefaults())
+                .cors(Customizer.withDefaults())   // auto cors filter use karega
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/register", "/login", "/health", "/activate").permitAll()
                         .anyRequest().authenticated()
@@ -44,40 +39,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
-
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder(12);
-    }
-
-    @Bean
-    public CorsConfigurationSource corsConfiguration() {
-
-        CorsConfiguration config = new CorsConfiguration();
-
-        // Allowed domains → localhost + render
-        config.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "https://money-manager-krrahul.onrender.com"
-        ));
-
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
-        config.setAllowedHeaders(List.of(
-                "Authorization",
-                "Content-Type",
-                "Accept",
-                "Origin"
-        ));
-
-        config.setAllowCredentials(true);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
-        return source;
     }
 
     @Bean
