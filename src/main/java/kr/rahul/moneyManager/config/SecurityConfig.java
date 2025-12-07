@@ -1,6 +1,7 @@
 package kr.rahul.moneyManager.config;
 
 import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,53 +30,43 @@ import lombok.RequiredArgsConstructor;
 public class SecurityConfig {
 
     private final MyUserDetailsService myUserDetailsService;
-    private final JwtFilter jwtFilter;
 
+    private final JwtFilter jwtFilter;
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
 
-        return httpSecurity
-                .csrf(AbstractHttpConfigurer::disable)
+        return httpSecurity.csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register", "/login", "/health", "/activate").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth->auth.requestMatchers("/register","/login","/health","/activate").permitAll().anyRequest().authenticated())
+                .sessionManagement(session->session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
+
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(12);
+    public PasswordEncoder passwordEncoder(){
+        return  new BCryptPasswordEncoder(12);
     }
 
     @Bean
-    public CorsConfigurationSource corsConfiguration() {
-
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(
-                "http://localhost:5173",
-                "https://money-manager-krrahul.onrender.com",
-                "https://moneymanagerweb.vercel.app"
-        ));
-
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "Origin"));
-        config.setAllowCredentials(true);
-
+    public CorsConfigurationSource corsConfiguration(){
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(List.of("*"));
+        configuration.setAllowedMethods(List.of("GET","PUT","POST","DELETE","OPTIONS"));
+        configuration.setAllowedHeaders(List.of("Authorization","Content-Type","Accept"));
+        configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-
+        source.registerCorsConfiguration("/**",configuration);
         return source;
     }
 
     @Bean
     public AuthenticationManager authenticationManager() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(myUserDetailsService);
-        authProvider.setPasswordEncoder(passwordEncoder());
-        return new ProviderManager(authProvider);
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+        authenticationProvider.setUserDetailsService(myUserDetailsService);
+        authenticationProvider.setPasswordEncoder(passwordEncoder());
+        return new ProviderManager(authenticationProvider);
     }
+
 }

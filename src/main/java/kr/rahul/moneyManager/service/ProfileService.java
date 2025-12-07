@@ -53,28 +53,26 @@ public class ProfileService {
         return toDTO(newProfile);
     }
 
-    private ProfileEntity toEntity(ProfileDTO dto) {
+    public ProfileEntity toEntity(ProfileDTO profileDTO){
         return ProfileEntity.builder()
-                .id(dto.getId())
-                .fullName(dto.getFullName())
-                .email(dto.getEmail())
-                .password(passwordEncoder.encode(dto.getPassword()))
-                .profileImageUrl(dto.getProfileImageUrl())
-                .createdAt(dto.getCreatedAt())
-                .updatedAt(dto.getUpdatedAt())
-                .isActive(dto.getIsActive())
+                .id(profileDTO.getId())
+                .fullName(profileDTO.getFullName())
+                .email(profileDTO.getEmail())
+                .imageUrl(profileDTO.getImageUrl())
+                .password(passwordEncoder.encode(profileDTO.getPassword()))
+                .createAt(profileDTO.getCreateAt())
+                .updatedAt(profileDTO.getUpdatedAt())
                 .build();
     }
 
-    private ProfileDTO toDTO(ProfileEntity entity) {
+    public ProfileDTO toDTO(ProfileEntity profileEntity){
         return ProfileDTO.builder()
-                .id(entity.getId())
-                .fullName(entity.getFullName())
-                .email(entity.getEmail())
-                .profileImageUrl(entity.getProfileImageUrl())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
-                .isActive(entity.getIsActive())
+                .id(profileEntity.getId())
+                .fullName(profileEntity.getFullName())
+                .email(profileEntity.getEmail())
+                .imageUrl(profileEntity.getImageUrl())
+                .createAt(profileEntity.getCreateAt())
+                .updatedAt(profileEntity.getUpdatedAt())
                 .build();
     }
     
@@ -101,6 +99,7 @@ public class ProfileService {
                 .map(ProfileEntity::getIsActive)
                 .orElse(false);
     }
+    
     public ProfileEntity getCurrentProfile(){
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
