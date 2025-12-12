@@ -23,8 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class EmailService {
 
-
-
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Value("${BREVO_FROM_MAIL}")
@@ -35,6 +33,7 @@ public class EmailService {
 
     private static final String BREVO_API_URL = "https://api.brevo.com/v3/smtp/email";
 
+
     public void sendEmail(String to, String subject, String htmlContent) {
         try {
             log.info("📤 Sending email via Brevo API to {}", to);
@@ -43,30 +42,30 @@ public class EmailService {
             headers.set("api-key", brevoApiKey);
             headers.setContentType(MediaType.APPLICATION_JSON);
 
-            String body = String.format("""
-                {
-                  "sender": {"email": "%s"},
-                  "to": [{"email": "%s"}],
-                  "subject": "%s",
-                  "htmlContent": "%s"
-                }
-            """, fromEmail, to, subject, htmlContent.replace("\"", "'"));
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("sender", Map.of("email", fromEmail));
+            payload.put("to", List.of(Map.of("email", to)));
+            payload.put("subject", subject);
+            payload.put("htmlContent", htmlContent);
 
-            HttpEntity<String> request = new HttpEntity<>(body, headers);
+            ObjectMapper mapper = new ObjectMapper();
+            HttpEntity<String> request = new HttpEntity<>(mapper.writeValueAsString(payload), headers);
+
             ResponseEntity<String> response = restTemplate.postForEntity(BREVO_API_URL, request, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
-                log.info("✅ Email sent successfully to {}", to);
+                log.info("✔ Email sent successfully to {}", to);
             } else {
-                log.error("❌ Failed to send email: {}", response.getBody());
+                log.error("❌ Brevo send email failure: {}", response.getBody());
                 throw new RuntimeException("Email sending failed: " + response.getBody());
             }
 
         } catch (Exception e) {
-            log.error("❌ Email sending failed: {}", e.getMessage());
+            log.error("❌ Email sending error: {}", e.getMessage());
             throw new RuntimeException("Email sending failed: " + e.getMessage(), e);
         }
     }
+
 
     public void sendEmailWithExcelAttachment(String to,
                                              String subject,
@@ -76,45 +75,41 @@ public class EmailService {
         try {
             log.info("📤 Sending email with Excel attachment to {}", to);
 
-            // Encode Excel data to Base64 for API
             String base64Excel = Base64.getEncoder().encodeToString(excelData);
 
-            // Prepare JSON body
-            Map<String, Object> emailBody = new HashMap<>();
-            emailBody.put("sender", Map.of("email", fromEmail));
-            emailBody.put("to", List.of(Map.of("email", to)));
-            emailBody.put("subject", subject);
-            emailBody.put("htmlContent", htmlBody);
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("sender", Map.of("email", fromEmail));
+            payload.put("to", List.of(Map.of("email", to)));
+            payload.put("subject", subject);
+            payload.put("htmlContent", htmlBody);
 
-            // Add attachment
-            emailBody.put("attachment", List.of(Map.of(
+            // correct Note: key is `"attachments"` plural
+            payload.put("attachments", List.of(Map.of(
                     "content", base64Excel,
                     "name", fileName
             )));
 
-            // Convert to JSON
-            ObjectMapper objectMapper = new ObjectMapper();
-            String requestBody = objectMapper.writeValueAsString(emailBody);
+            ObjectMapper mapper = new ObjectMapper();
+            String jsonBody = mapper.writeValueAsString(payload);
 
-            // Set headers
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("api-key", brevoApiKey);
 
-            // Send request
-            HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
+            HttpEntity<String> request = new HttpEntity<>(jsonBody, headers);
+
             ResponseEntity<String> response =
                     restTemplate.postForEntity(BREVO_API_URL, request, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
-                log.info("✅ Email sent successfully to {}", to);
+                log.info("✔ Email with attachment sent successfully to {}", to);
             } else {
-                log.error("❌ Brevo API error: {}", response.getBody());
-                throw new RuntimeException("Failed to send email: " + response.getBody());
+                log.error("❌ Attachment sending failed: {}", response.getBody());
+                throw new RuntimeException("Failed to send mail: " + response.getBody());
             }
 
         } catch (Exception e) {
-            log.error("❌ Error sending email with attachment: {}", e.getMessage(), e);
+            log.error("❌ Mail attachment exception: {}", e.getMessage());
             throw new RuntimeException("Email sending failed: " + e.getMessage(), e);
         }
     }

@@ -1,9 +1,6 @@
 package kr.rahul.moneyManager.service;
 
-
-
 import java.util.Collections;
-
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -14,7 +11,6 @@ import kr.rahul.moneyManager.entity.ProfileEntity;
 import kr.rahul.moneyManager.repository.ProfileRepository;
 import lombok.RequiredArgsConstructor;
 
-
 @Service
 @RequiredArgsConstructor
 public class MyUserDetailsService implements UserDetailsService {
@@ -24,8 +20,8 @@ public class MyUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        ProfileEntity profileEntity = profileRepository.findByEmail(username).orElse(null);
-
+        ProfileEntity profileEntity = profileRepository.findByEmail(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
         return User.builder()
                 .username(profileEntity.getEmail())
